@@ -4,70 +4,71 @@
 ![Platform: macOS](https://img.shields.io/badge/platform-macOS%2013%2B-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9-orange)
 
-App nativa macOS per lanciare [Claude Code](https://github.com/anthropics/claude-code) con la giusta API key e cartella progetto — senza dover fare `export ANTHROPIC_API_KEY=...` ogni volta.
+A native macOS app for launching [Claude Code](https://github.com/anthropics/claude-code) with the right API key and project folder, without having to run `export ANTHROPIC_API_KEY=...` every time.
 
-## Funzionalità
+## Features
 
-- Salva più API key con nome personalizzato, cifrate nel Keychain di macOS
-- Salva le cartelle progetto preferite
-- Lancia Claude Code in un click con key e cartella selezionate
-- Supporta Terminal, iTerm2, Warp, Ghostty
-- Terminale di default persistente tra sessioni
-- Pulsante "Copia comando" come fallback
+- Save multiple API keys with custom names, encrypted in the macOS Keychain
+- Save your favorite project folders
+- Launch Claude Code in one click with the selected key and folder
+- Supports Terminal, iTerm2, Warp, and Ghostty
+- Persists the default terminal between sessions
+- Includes a "Copy command" fallback button
+- Lets the user switch the app language between English and Italian
 
-## Sicurezza
+## Security
 
-Le API key non vengono mai scritte su disco in chiaro. L'app usa due livelli di storage:
+API keys are never written to disk in plain text. The app uses two storage layers:
 
-| Dato | Dove | Cifrato |
-|------|------|---------|
-| Valore della API key | macOS Keychain | ✅ sì, cifrato dall'OS |
-| Nome, id, data | UserDefaults | — (non sensibile) |
-| Cartelle progetto | UserDefaults | — (non sensibile) |
+| Data | Stored in | Encrypted |
+|------|-----------|-----------|
+| API key value | macOS Keychain | Yes, encrypted by the OS |
+| Name, id, date | UserDefaults | Not sensitive |
+| Project folders | UserDefaults | Not sensitive |
 
-Il Keychain di macOS cifra i segreti a livello di sistema operativo e li rende accessibili solo quando il Mac è sbloccato. Nessun file con segreti viene mai creato nella cartella del progetto, quindi fare `git push` è sicuro senza nessuna precauzione aggiuntiva.
+The macOS Keychain encrypts secrets at the operating system level and only makes them available when the Mac is unlocked. No secret files are ever created inside the project folder, so `git push` is safe without extra precautions.
 
-Puoi verificare aprendo **Keychain Access.app** e cercando `com.local.claudelauncher`.
+You can verify this by opening **Keychain Access.app** and searching for `com.local.claudelauncher`.
 
-**Migrazione automatica:** se hai usato una versione precedente dell'app (che salvava le key in chiaro in UserDefaults), al primo avvio i valori vengono spostati automaticamente nel Keychain e il vecchio record viene cancellato.
+**Automatic migration:** if you used an older version of the app that stored keys in plain text in UserDefaults, the values are moved automatically to the Keychain on first launch and the old record is deleted.
 
-## Requisiti
+## Requirements
 
-- macOS 13 (Ventura) o superiore
+- macOS 13 (Ventura) or later
 - Xcode Command Line Tools
-- Claude Code installato (`npm install -g @anthropic-ai/claude-code`)
+- Claude Code installed (`npm install -g @anthropic-ai/claude-code`)
 
-## Installazione
+## Installation
 
 ```bash
-git clone https://github.com/TUO_USERNAME/ClaudeLauncher.git
+git clone https://github.com/YOUR_USERNAME/ClaudeLauncher.git
 cd ClaudeLauncher
 chmod +x install.sh make_icon.sh
 ./install.sh
 ```
 
-Scegli opzione **2** (`~/Applications`) se non vuoi usare la password admin.
+Choose option **2** (`~/Applications`) if you do not want to use an admin password.
 
-### Icona personalizzata (opzionale)
+### Custom Icon (Optional)
 
-Metti un file `icon.png` (almeno 512×512) nella root del progetto, poi:
+Place an `icon.png` file (at least 512x512) in the project root, then run:
 
 ```bash
 ./make_icon.sh
 ./install.sh
 ```
 
-## Prima apertura
+## First Launch
 
-macOS potrebbe mostrare un avviso "sviluppatore non verificato". Per aprire l'app:
+macOS may show an "unverified developer" warning. To open the app:
 
 ```bash
 xattr -cr ~/Applications/ClaudeLauncher.app
 open ~/Applications/ClaudeLauncher.app
 ```
 
-La prima volta che premi "Lancia Claude", Terminal chiederà il permesso per essere controllato via Apple Events: clicca **OK** — non lo chiede più.
+The first time you press "Launch Claude", Terminal will ask for permission to be controlled via Apple Events. Click **OK** and it will not ask again.
 
-## Licenza
+## License
 
-MIT — vedi [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).

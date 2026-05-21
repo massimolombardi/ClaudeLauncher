@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ContentView: View {
+    @AppStorage("app_language") private var appLanguageRaw = AppLanguage.english.rawValue
     @StateObject private var store = Store()
     @State private var selectedKey: APIKey?
     @State private var selectedFolder: ProjectFolder?
@@ -11,41 +12,60 @@ struct ContentView: View {
     @State private var copied = false
 
     var canLaunch: Bool { selectedKey != nil && selectedFolder != nil }
+    var language: AppLanguage { AppLanguage(rawValue: appLanguageRaw) ?? .english }
+    var l10n: L10n { L10n(language: language) }
 
     var body: some View {
         VStack(spacing: 0) {
-            // Header
             HStack(spacing: 10) {
                 Image(systemName: "terminal.fill")
                     .font(.system(size: 18, weight: .medium))
                     .foregroundColor(.primary)
+
                 VStack(alignment: .leading, spacing: 1) {
                     Text("Claude Launcher")
                         .font(.system(size: 14, weight: .semibold))
-                    Text("Scegli API key e cartella, poi lancia.")
+                    Text(l10n.subtitle)
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
-                    Text("Versione \(AppInfo.version)")
+                    Text("\(l10n.versionLabel) \(AppInfo.version)")
                         .font(.system(size: 10, design: .monospaced))
                         .foregroundColor(.secondary.opacity(0.8))
                 }
+
                 Spacer()
-                // Terminal default picker inline in header
-                HStack(spacing: 6) {
-                    Text("Terminale:")
-                        .font(.system(size: 11))
-                        .foregroundColor(.secondary)
-                    Picker("", selection: Binding(
-                        get: { store.defaultTerminal },
-                        set: { store.saveDefaultTerminal($0) }
-                    )) {
-                        ForEach(TerminalApp.allCases.filter { $0.isInstalled }, id: \.self) { t in
-                            Text(t.rawValue).tag(t)
+
+                VStack(alignment: .trailing, spacing: 8) {
+                    HStack(spacing: 6) {
+                        Text(l10n.languageLabel)
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                        Picker("", selection: $appLanguageRaw) {
+                            ForEach(AppLanguage.allCases) { option in
+                                Text(option.displayName).tag(option.rawValue)
+                            }
                         }
+                        .pickerStyle(.menu)
+                        .frame(width: 110)
+                        .labelsHidden()
                     }
-                    .pickerStyle(.menu)
-                    .frame(width: 110)
-                    .labelsHidden()
+
+                    HStack(spacing: 6) {
+                        Text(l10n.terminalLabel)
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                        Picker("", selection: Binding(
+                            get: { store.defaultTerminal },
+                            set: { store.saveDefaultTerminal($0) }
+                        )) {
+                            ForEach(TerminalApp.allCases.filter { $0.isInstalled }, id: \.self) { t in
+                                Text(t.rawValue).tag(t)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .frame(width: 110)
+                        .labelsHidden()
+                    }
                 }
             }
             .padding(.horizontal, 20)
@@ -56,14 +76,13 @@ struct ContentView: View {
 
             ScrollView {
                 VStack(spacing: 16) {
-                    // API Keys
                     SectionCard(
-                        title: "API Key",
+                        title: l10n.apiKeySectionTitle,
                         icon: "key.fill",
                         onAdd: { showAddKey = true }
                     ) {
                         if store.apiKeys.isEmpty {
-                            EmptyRow(text: "Nessuna API key salvata")
+                            EmptyRow(text: l10n.noSavedAPIKeys)
                         } else {
                             ForEach(store.apiKeys) { key in
                                 KeyRow(
@@ -80,14 +99,13 @@ struct ContentView: View {
                         }
                     }
 
-                    // Folders
                     SectionCard(
-                        title: "Cartella progetto",
+                        title: l10n.projectFolderSectionTitle,
                         icon: "folder.fill",
                         onAdd: { pickFolder() }
                     ) {
                         if store.folders.isEmpty {
-                            EmptyRow(text: "Nessuna cartella salvata")
+                            EmptyRow(text: l10n.noSavedFolders)
                         } else {
                             ForEach(store.folders) { folder in
                                 FolderRow(
@@ -108,9 +126,7 @@ struct ContentView: View {
 
             Divider()
 
-            // Launch bar
             HStack(spacing: 10) {
-                // Summary
                 VStack(alignment: .leading, spacing: 2) {
                     if let k = selectedKey, let f = selectedFolder {
                         Text("\(k.name)  →  \(f.displayPath)")
@@ -119,14 +135,14 @@ struct ContentView: View {
                             .lineLimit(1)
                             .truncationMode(.middle)
                     } else {
-                        Text("Seleziona una key e una cartella")
+                        Text(l10n.selectKeyAndFolder)
                             .font(.system(size: 11))
                             .foregroundColor(Color.secondary.opacity(0.6))
                     }
                 }
+
                 Spacer()
 
-                // Copy button
                 Button {
                     guard let k = selectedKey, let f = selectedFolder else { return }
                     Launcher.copyCommand(folder: f, apiKey: k)
@@ -135,14 +151,13 @@ struct ContentView: View {
                         withAnimation { copied = false }
                     }
                 } label: {
-                    Label(copied ? "Copiato!" : "Copia cmd", systemImage: copied ? "checkmark" : "doc.on.doc")
+                    Label(copied ? l10n.copiedLabel : l10n.copyCommandLabel, systemImage: copied ? "checkmark" : "doc.on.doc")
                         .font(.system(size: 12))
                 }
                 .buttonStyle(.bordered)
                 .disabled(!canLaunch)
                 .tint(copied ? .green : .secondary)
 
-                // Launch button
                 Button {
                     guard let k = selectedKey, var f = selectedFolder else { return }
                     store.markUsed(&f)
@@ -153,7 +168,7 @@ struct ContentView: View {
                         withAnimation { launched = false }
                     }
                 } label: {
-                    Label(launched ? "Lanciato!" : "Lancia Claude", systemImage: launched ? "checkmark.circle.fill" : "play.fill")
+                    Label(launched ? l10n.launchedLabel : l10n.launchClaudeLabel, systemImage: launched ? "checkmark.circle.fill" : "play.fill")
                         .font(.system(size: 13, weight: .medium))
                         .frame(minWidth: 130)
                 }
@@ -166,6 +181,7 @@ struct ContentView: View {
             .padding(.vertical, 14)
             .background(Color(NSColor.windowBackgroundColor))
         }
+        .environment(\.locale, language.locale)
         .sheet(isPresented: $showAddKey) {
             AddKeySheet { key in
                 store.addKey(key)
@@ -188,7 +204,6 @@ struct ContentView: View {
             }
         }
         .onAppear {
-            // Auto-select first items if none selected
             if selectedKey == nil { selectedKey = store.apiKeys.first }
             if selectedFolder == nil { selectedFolder = store.folders.first }
         }
@@ -199,18 +214,16 @@ struct ContentView: View {
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false
-        panel.prompt = "Seleziona"
-        panel.message = "Scegli la cartella del progetto"
+        panel.prompt = l10n.selectPrompt
+        panel.message = l10n.chooseProjectFolderMessage
         if panel.runModal() == .OK, let url = panel.url {
             let name = url.lastPathComponent
-            var folder = ProjectFolder(name: name, path: url.path)
+            let folder = ProjectFolder(name: name, path: url.path)
             store.addFolder(folder)
             selectedFolder = store.folders.last(where: { $0.path == url.path })
         }
     }
 }
-
-// MARK: - Section card
 
 struct SectionCard<Content: View>: View {
     let title: String
@@ -246,9 +259,8 @@ struct SectionCard<Content: View>: View {
     }
 }
 
-// MARK: - Key row
-
 struct KeyRow: View {
+    @AppStorage("app_language") private var appLanguageRaw = AppLanguage.english.rawValue
     let key: APIKey
     let isSelected: Bool
     let onSelect: () -> Void
@@ -256,6 +268,9 @@ struct KeyRow: View {
     let onDelete: () -> Void
     @State private var hovered = false
     @State private var showValue = false
+
+    var language: AppLanguage { AppLanguage(rawValue: appLanguageRaw) ?? .english }
+    var l10n: L10n { L10n(language: language) }
 
     var maskedValue: String {
         let v = key.value
@@ -265,7 +280,6 @@ struct KeyRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            // Selection indicator
             Circle()
                 .fill(isSelected ? Color.accentColor : Color.clear)
                 .frame(width: 7, height: 7)
@@ -289,7 +303,7 @@ struct KeyRow: View {
                         .foregroundColor(.secondary)
                 }
                 .buttonStyle(.borderless)
-                .help(showValue ? "Nascondi" : "Mostra key")
+                .help(showValue ? l10n.hideKeyHelp : l10n.showKeyHelp)
 
                 Button(action: onEdit) {
                     Image(systemName: "pencil")
@@ -297,7 +311,7 @@ struct KeyRow: View {
                         .foregroundColor(.secondary)
                 }
                 .buttonStyle(.borderless)
-                .help("Modifica")
+                .help(l10n.editHelp)
 
                 Button(action: onDelete) {
                     Image(systemName: "trash")
@@ -305,7 +319,7 @@ struct KeyRow: View {
                         .foregroundColor(.red.opacity(0.7))
                 }
                 .buttonStyle(.borderless)
-                .help("Elimina")
+                .help(l10n.deleteHelp)
             }
         }
         .padding(.horizontal, 14)
@@ -316,8 +330,6 @@ struct KeyRow: View {
         .onHover { hovered = $0 }
     }
 }
-
-// MARK: - Folder row
 
 struct FolderRow: View {
     let folder: ProjectFolder
@@ -372,10 +384,9 @@ struct FolderRow: View {
     }
 }
 
-// MARK: - Empty state
-
 struct EmptyRow: View {
     let text: String
+
     var body: some View {
         HStack {
             Text(text)
@@ -387,35 +398,41 @@ struct EmptyRow: View {
     }
 }
 
-// MARK: - Add key sheet
-
 struct AddKeySheet: View {
+    @AppStorage("app_language") private var appLanguageRaw = AppLanguage.english.rawValue
     let onSave: (APIKey) -> Void
     @Environment(\.dismiss) var dismiss
     @State private var name = ""
     @State private var value = ""
     @State private var showValue = false
 
+    var language: AppLanguage { AppLanguage(rawValue: appLanguageRaw) ?? .english }
+    var l10n: L10n { L10n(language: language) }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text("Aggiungi API Key")
+            Text(l10n.addAPIKeyTitle)
                 .font(.system(size: 15, weight: .semibold))
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Nome").font(.system(size: 12)).foregroundColor(.secondary)
-                TextField("es. Anthropic Personale", text: $name)
+                Text(l10n.nameLabel)
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
+                TextField(l10n.personalAnthropicPlaceholder, text: $name)
                     .textFieldStyle(.roundedBorder)
             }
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("API Key").font(.system(size: 12)).foregroundColor(.secondary)
+                Text(l10n.apiKeyLabel)
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
                 HStack {
                     if showValue {
-                        TextField("sk-ant-...", text: $value)
+                        TextField(l10n.apiKeyPlaceholder, text: $value)
                             .textFieldStyle(.roundedBorder)
                             .font(.system(size: 12, design: .monospaced))
                     } else {
-                        SecureField("sk-ant-...", text: $value)
+                        SecureField(l10n.apiKeyPlaceholder, text: $value)
                             .textFieldStyle(.roundedBorder)
                             .font(.system(size: 12, design: .monospaced))
                     }
@@ -428,9 +445,9 @@ struct AddKeySheet: View {
 
             HStack {
                 Spacer()
-                Button("Annulla") { dismiss() }
+                Button(l10n.cancelButton) { dismiss() }
                     .keyboardShortcut(.escape)
-                Button("Salva") {
+                Button(l10n.saveButton) {
                     let key = APIKey(name: name.isEmpty ? "Key \(Int.random(in: 100...999))" : name, value: value)
                     onSave(key)
                 }
@@ -444,15 +461,17 @@ struct AddKeySheet: View {
     }
 }
 
-// MARK: - Edit key sheet
-
 struct EditKeySheet: View {
+    @AppStorage("app_language") private var appLanguageRaw = AppLanguage.english.rawValue
     let key: APIKey
     let onSave: (APIKey) -> Void
     @Environment(\.dismiss) var dismiss
     @State private var name: String
     @State private var value: String
     @State private var showValue = false
+
+    var language: AppLanguage { AppLanguage(rawValue: appLanguageRaw) ?? .english }
+    var l10n: L10n { L10n(language: language) }
 
     init(key: APIKey, onSave: @escaping (APIKey) -> Void) {
         self.key = key
@@ -463,24 +482,28 @@ struct EditKeySheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text("Modifica API Key")
+            Text(l10n.editAPIKeyTitle)
                 .font(.system(size: 15, weight: .semibold))
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Nome").font(.system(size: 12)).foregroundColor(.secondary)
-                TextField("es. Anthropic Personale", text: $name)
+                Text(l10n.nameLabel)
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
+                TextField(l10n.personalAnthropicPlaceholder, text: $name)
                     .textFieldStyle(.roundedBorder)
             }
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("API Key").font(.system(size: 12)).foregroundColor(.secondary)
+                Text(l10n.apiKeyLabel)
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
                 HStack {
                     if showValue {
-                        TextField("sk-ant-...", text: $value)
+                        TextField(l10n.apiKeyPlaceholder, text: $value)
                             .textFieldStyle(.roundedBorder)
                             .font(.system(size: 12, design: .monospaced))
                     } else {
-                        SecureField("sk-ant-...", text: $value)
+                        SecureField(l10n.apiKeyPlaceholder, text: $value)
                             .textFieldStyle(.roundedBorder)
                             .font(.system(size: 12, design: .monospaced))
                     }
@@ -493,9 +516,9 @@ struct EditKeySheet: View {
 
             HStack {
                 Spacer()
-                Button("Annulla") { dismiss() }
+                Button(l10n.cancelButton) { dismiss() }
                     .keyboardShortcut(.escape)
-                Button("Salva") {
+                Button(l10n.saveButton) {
                     var updated = key
                     updated.name = name.isEmpty ? key.name : name
                     updated.value = value
@@ -511,35 +534,42 @@ struct EditKeySheet: View {
     }
 }
 
-
 struct AddFolderSheet: View {
+    @AppStorage("app_language") private var appLanguageRaw = AppLanguage.english.rawValue
     let onSave: (ProjectFolder) -> Void
     @Environment(\.dismiss) var dismiss
     @State private var name = ""
     @State private var path = ""
 
+    var language: AppLanguage { AppLanguage(rawValue: appLanguageRaw) ?? .english }
+    var l10n: L10n { L10n(language: language) }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text("Aggiungi cartella")
+            Text(l10n.addFolderTitle)
                 .font(.system(size: 15, weight: .semibold))
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Nome").font(.system(size: 12)).foregroundColor(.secondary)
-                TextField("es. MyProject", text: $name)
+                Text(l10n.nameLabel)
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
+                TextField("e.g. MyProject", text: $name)
                     .textFieldStyle(.roundedBorder)
             }
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Percorso").font(.system(size: 12)).foregroundColor(.secondary)
+                Text(l10n.pathLabel)
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
                 HStack {
                     TextField("~/Developer/myproject", text: $path)
                         .textFieldStyle(.roundedBorder)
                         .font(.system(size: 12, design: .monospaced))
-                    Button("Sfoglia") {
+                    Button(l10n.browseButton) {
                         let panel = NSOpenPanel()
                         panel.canChooseFiles = false
                         panel.canChooseDirectories = true
-                        panel.prompt = "Seleziona"
+                        panel.prompt = l10n.selectPrompt
                         if panel.runModal() == .OK, let url = panel.url {
                             path = url.path
                             if name.isEmpty { name = url.lastPathComponent }
@@ -551,11 +581,14 @@ struct AddFolderSheet: View {
 
             HStack {
                 Spacer()
-                Button("Annulla") { dismiss() }
+                Button(l10n.cancelButton) { dismiss() }
                     .keyboardShortcut(.escape)
-                Button("Salva") {
+                Button(l10n.saveButton) {
                     let expandedPath = (path as NSString).expandingTildeInPath
-                    let folder = ProjectFolder(name: name.isEmpty ? URL(fileURLWithPath: expandedPath).lastPathComponent : name, path: expandedPath)
+                    let folder = ProjectFolder(
+                        name: name.isEmpty ? URL(fileURLWithPath: expandedPath).lastPathComponent : name,
+                        path: expandedPath
+                    )
                     onSave(folder)
                 }
                 .buttonStyle(.borderedProminent)

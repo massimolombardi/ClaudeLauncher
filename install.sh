@@ -8,7 +8,7 @@ APP_BUNDLE="$BUILD_DIR/$APP_NAME.app"
 
 # Check Xcode CLI tools
 if ! command -v swift &> /dev/null; then
-    echo "❌ Swift non trovato. Installa Xcode Command Line Tools:"
+    echo "❌ Swift not found. Install Xcode Command Line Tools:"
     echo "   xcode-select --install"
     exit 1
 fi
@@ -20,11 +20,11 @@ if [ ! -f "$BUILD_DIR/$APP_NAME" ]; then
     echo ""
     swift build -c release 2>&1
 else
-    echo "✅ Binario già presente, skip build. (Cancella .build/ per ricompilare)"
+    echo "✅ Binary already present, skipping build. (Delete .build/ to rebuild)"
 fi
 
 echo ""
-echo "📦 Creazione app bundle..."
+echo "📦 Creating app bundle..."
 
 # Create .app bundle structure
 rm -rf "$APP_BUNDLE"
@@ -37,7 +37,7 @@ cp "$BUILD_DIR/$APP_NAME" "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
 # Copy icon if present
 if [ -f "Resources/AppIcon.icns" ]; then
     cp "Resources/AppIcon.icns" "$APP_BUNDLE/Contents/Resources/AppIcon.icns"
-    echo "🎨 Icona copiata"
+    echo "🎨 Icon copied"
 fi
 
 # Write Info.plist
@@ -67,7 +67,7 @@ cat > "$APP_BUNDLE/Contents/Info.plist" << EOF
     <key>NSHighResolutionCapable</key>
     <true/>
     <key>NSAppleEventsUsageDescription</key>
-    <string>Claude Launcher usa Apple Events per aprire il terminale con le impostazioni scelte.</string>
+    <string>Claude Launcher uses Apple Events to open the terminal with the selected settings.</string>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
 </dict>
@@ -77,18 +77,18 @@ EOF
 # Remove quarantine
 xattr -cr "$APP_BUNDLE" 2>/dev/null || true
 
-echo "✅ Bundle creato: $APP_BUNDLE"
+echo "✅ Bundle created: $APP_BUNDLE"
 echo ""
 
 # Choose install location
 SYS_APPS="/Applications"
 USER_APPS="$HOME/Applications"
 
-echo "Dove vuoi installare?"
-echo "  1) $SYS_APPS  (richiede password admin)"
-echo "  2) $USER_APPS  (nessuna password)"
-echo "  3) Lascia in $(pwd)/$APP_BUNDLE"
-read -p "Scelta [1/2/3]: " choice
+echo "Where do you want to install it?"
+echo "  1) $SYS_APPS  (requires admin password)"
+echo "  2) $USER_APPS  (no password required)"
+echo "  3) Keep it in $(pwd)/$APP_BUNDLE"
+read -p "Choice [1/2/3]: " choice
 
 case "$choice" in
     1)
@@ -107,13 +107,13 @@ case "$choice" in
 esac
 
 echo ""
-echo "✅ App pronta: $FINAL"
+echo "✅ App ready: $FINAL"
 echo ""
-read -p "Aprire ora? [S/n] " open_answer
-open_answer=${open_answer:-S}
-if [[ "$open_answer" =~ ^[Ss]$ ]]; then
+read -p "Open now? [Y/n] " open_answer
+open_answer=${open_answer:-Y}
+if [[ "$open_answer" =~ ^[Yy]$ ]]; then
     open "$FINAL"
 fi
 
 echo ""
-echo "🎉 Fatto!"
+echo "🎉 Done!"
