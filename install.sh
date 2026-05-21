@@ -2,7 +2,7 @@
 set -e
 
 APP_NAME="ClaudeLauncher"
-APP_VERSION="1.0.0"
+APP_VERSION="1.1.0"
 BUILD_DIR=".build/release"
 APP_BUNDLE="$BUILD_DIR/$APP_NAME.app"
 
