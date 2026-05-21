@@ -25,6 +25,9 @@ struct ContentView: View {
                     Text("Scegli API key e cartella, poi lancia.")
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
+                    Text("Versione \(AppInfo.version)")
+                        .font(.system(size: 10, design: .monospaced))
+                        .foregroundColor(.secondary.opacity(0.8))
                 }
                 Spacer()
                 // Terminal default picker inline in header

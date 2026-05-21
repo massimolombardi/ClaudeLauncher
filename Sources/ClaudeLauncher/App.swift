@@ -1,5 +1,9 @@
 import SwiftUI
 
+enum AppInfo {
+    static let version = "1.0.0"
+}
+
 @main
 struct ClaudeLauncherApp: App {
     var body: some Scene {
