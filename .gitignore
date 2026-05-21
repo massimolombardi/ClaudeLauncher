@@ -1,0 +1,19 @@
+# Build artifacts
+.build/
+*.o
+*.d
+
+# Xcode
+*.xcodeproj
+*.xcworkspace
+.swiftpm/
+
+# macOS
+.DS_Store
+
+# Icona sorgente (opzionale tenerla fuori)
+# icon.png
+
+# Mai committare file con segreti
+*.plist
+*.env
